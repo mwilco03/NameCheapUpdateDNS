@@ -1,18 +1,56 @@
+
+function Set-NameCheapDNSEnvironmentVariables {
+    <#
+    .SYNOPSIS
+    Sets environment variables for NameCheap DNS credentials.
+    .DESCRIPTION
+    This function saves the NameCheap DNS credentials as environment variables on the user's system.
+    It is intended for initial setup and reduces the need to repeatedly enter credentials.
+    .PARAMETER NameCheapHost
+    Specifies the NameCheap hostname to be stored as an environment variable.
+    .PARAMETER NameCheapDomain
+    Specifies the NameCheap domain to be stored as an environment variable.
+    .PARAMETER Password
+    Specifies the secure string password for the NameCheap DNS account.
+    .EXAMPLE
+    $credential = Get-Credential -UserName "host" -Message "Enter Dynamic DNS Password"
+    Set-NameCheapDNSEnvironmentVariables -NameCheapHost "host" -NameCheapDomain "example.com" -Password $credential.Password -IP "192.0.2.1"
+    # This example sets the environment variables for the NameCheap DNS credentials.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$NameCheapHost,
+        [Parameter(Mandatory = $true)]
+        [string]$NameCheapDomain,
+        [System.Security.SecureString]$Password
+    )
+    [Environment]::SetEnvironmentVariable("NameCheapHost", $NameCheapHost, "User")
+    [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
+    if($password){
+    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+    $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+    [Environment]::SetEnvironmentVariable("NameCheapPassword", $plainPassword, "User")
+    Write-Host "Environment variables set for NameCheap DNS."
+    }
+    else{
+    $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
+    $plainPassword = $credential.getnetworkcredential().Password
+    [Environment]::SetEnvironmentVariable("NameCheapPassword", $plainPassword, "User")
+    Write-Host "Environment variables set for NameCheap DNS."
+    }
+}
+
 function Get-NameCheapDNSCredential {
     <#
     .SYNOPSIS
     Retrieves credentials for NameCheap Dynamic DNS update.
-
     .DESCRIPTION
     Prompts the user to enter the Dynamic DNS password and returns a hashtable containing the
     necessary information for a DNS update request.
-
     .PARAMETER NameCheapHost
     The subdomain or hostname for which you are updating the DNS record.
-
     .PARAMETER Domain
     The domain within which the host resides.
-
     .EXAMPLE
     $creds = Get-NameCheapDNSCredential -NameCheapHost "host" -Domain "example.com"
     This example retrieves credentials for the host "host.example.com".
@@ -55,16 +93,17 @@ function Update-NameCheapDNS {
     param(
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias("Subdomain","Host")]
-        [string]$NameCheapHost,
+        [string]$NameCheapHost = $env:NameCheapHost,
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [string]$NameCheapDomain,
+        [string]$NameCheapDomain = $env:NameCheapDomain,
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [securestring]$Password,
-        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [string]$IP
+        [securestring]$Password = $env:NameCheapPassword,
+        [Parameter(ValueFromPipelineByPropertyName = $true)]
+        [string]$IP = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     )
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+    if(-not($IP))
     $NameCheapParams = @{
         host     = $NameCheapHost
         domain   = $NameCheapDomain
