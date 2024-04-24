@@ -103,7 +103,6 @@ function Update-NameCheapDNS {
     )
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
-    if(-not($IP))
     $NameCheapParams = @{
         host     = $NameCheapHost
         domain   = $NameCheapDomain
