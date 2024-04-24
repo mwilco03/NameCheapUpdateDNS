@@ -29,15 +29,13 @@ function Set-NameCheapDNSEnvironmentVariables {
     [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
     if($password){
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    [Environment]::SetEnvironmentVariable("NameCheapPassword", $plainPassword, "User")
-    Write-Host "Environment variables set for NameCheap DNS."
     }
     else{
     $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credential.Password)
+    }
     [Environment]::SetEnvironmentVariable("NameCheapPassword", $bstr, "User")
     Write-Host "Environment variables set for NameCheap DNS."
-    }
 }
 
 function Get-NameCheapDNSCredential {
