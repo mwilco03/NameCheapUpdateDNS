@@ -23,18 +23,14 @@ function Set-NameCheapDNSEnvironmentVariables {
         [string]$NameCheapHost,
         [Parameter(Mandatory = $true)]
         [string]$NameCheapDomain,
-        [string]$Password
+        [string]$NameCheapPassword
     )
     [Environment]::SetEnvironmentVariable("NameCheapHost", $NameCheapHost, "User")
     [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
-    if($password){
-    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+    if(-not($NameCheapPassword)){
+    $NameCheapPassword = $(Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password").getNetworkCredential().Password
     }
-    else{
-    $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
-    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credential.Password)
-    }
-    [Environment]::SetEnvironmentVariable("NameCheapPassword", $bstr, "User")
+    [Environment]::SetEnvironmentVariable("NameCheapPassword", $NameCheapPassword, "User")
     Write-Host "Environment variables set for NameCheap DNS."
 }
 
@@ -62,10 +58,10 @@ function Get-NameCheapDNSCredential {
     )
     $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
     $NameCheapDNSCredential = @{
-        NameCheapHost     = $NameCheapHost
-        domain   = $NameCheapDomain
-        password = $credential.Password
-        ip       = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
+        NameCheapHost = $NameCheapHost
+        domain = $NameCheapDomain
+        password = $credential.getnetworkcredential().Password
+        ip = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     }
     return $NameCheapDNSCredential
 }
@@ -95,15 +91,14 @@ function Update-NameCheapDNS {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [string]$NameCheapDomain = $env:NameCheapDomain,
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [securestring]$Password = $env:NameCheapPassword,
+        [string]$Password = $env:NameCheapPassword,
         [Parameter(ValueFromPipelineByPropertyName = $true)]
         [string]$IP = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     )
-    $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Password)
     $NameCheapParams = @{
         host     = $NameCheapHost
         domain   = $NameCheapDomain
-        password = $plainPassword
+        password = $Password
         ip       = $IP
     }
     $NameCheapQueryString = $($NameCheapParams.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join "&"
