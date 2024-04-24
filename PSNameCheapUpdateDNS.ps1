@@ -13,8 +13,9 @@ function Set-NameCheapDNSEnvironmentVariables {
     .PARAMETER Password
     Specifies the secure string password for the NameCheap DNS account.
     .EXAMPLE
+    # If you do not provide a password you will be prompted for it
     $credential = Get-Credential -UserName "host" -Message "Enter Dynamic DNS Password"
-    Set-NameCheapDNSEnvironmentVariables -NameCheapHost "host" -NameCheapDomain "example.com" -Password $credential.Password -IP "192.0.2.1"
+    Set-NameCheapDNSEnvironmentVariables -NameCheapHost "host" -NameCheapDomain "example.com" -Password $credential.getnetworkCredential().Password -IP "192.0.2.1"
     # This example sets the environment variables for the NameCheap DNS credentials.
     #>
     param(
@@ -22,20 +23,19 @@ function Set-NameCheapDNSEnvironmentVariables {
         [string]$NameCheapHost,
         [Parameter(Mandatory = $true)]
         [string]$NameCheapDomain,
-        [System.Security.SecureString]$Password
+        [string]$Password
     )
     [Environment]::SetEnvironmentVariable("NameCheapHost", $NameCheapHost, "User")
     [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
     if($password){
     $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
     [Environment]::SetEnvironmentVariable("NameCheapPassword", $plainPassword, "User")
     Write-Host "Environment variables set for NameCheap DNS."
     }
     else{
     $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
-    $plainPassword = $credential.getnetworkcredential().Password
-    [Environment]::SetEnvironmentVariable("NameCheapPassword", $plainPassword, "User")
+    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credential.Password)
+    [Environment]::SetEnvironmentVariable("NameCheapPassword", $bstr, "User")
     Write-Host "Environment variables set for NameCheap DNS."
     }
 }
@@ -101,8 +101,7 @@ function Update-NameCheapDNS {
         [Parameter(ValueFromPipelineByPropertyName = $true)]
         [string]$IP = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     )
-    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+    $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Password)
     $NameCheapParams = @{
         host     = $NameCheapHost
         domain   = $NameCheapDomain
