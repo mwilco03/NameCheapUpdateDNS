@@ -25,13 +25,14 @@ function Set-NameCheapDNSEnvironmentVariables {
         [string]$NameCheapDomain,
         [string]$NameCheapPassword
     )
-    [Environment]::SetEnvironmentVariable("NameCheapHost", $NameCheapHost, "User")
-    [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
+    $NameCheapHost=$NameCheapHost
+    $NameCheapDomain=$NameCheapDomain
     if(-not($NameCheapPassword)){
-    $Credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
-    $NameCheapPassword = $Credential.getNetworkCredential().Password
+    $Credential = Read-Host -AsSecureString -Prompt "Enter Dynamic DNS Password"
+    $BytStr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Credential)
+    $NameCheapPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BytStr)
     }
-    [Environment]::SetEnvironmentVariable("NameCheapPassword", $NameCheapPassword, "User")
+    $Env:NameCheapPassword=$NameCheapPassword
     Write-Host "Environment variables set for NameCheap DNS."
 }
 
@@ -57,11 +58,13 @@ function Get-NameCheapDNSCredential {
         [Parameter(Mandatory = $true)]
         [string]$NameCheapDomain
     )
-    $credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
+    $Credential = Read-Host -AsSecureString -Prompt "Enter Dynamic DNS Password"
+    $BytStr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Credential)
+    $NameCheapPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BytStr) 
     $NameCheapDNSCredential = @{
         NameCheapHost = $NameCheapHost
         domain = $NameCheapDomain
-        password = $credential.getnetworkcredential().Password
+        password = $NameCheapPassword
         ip = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     }
     return $NameCheapDNSCredential
