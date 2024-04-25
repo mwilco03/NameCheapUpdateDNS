@@ -28,7 +28,8 @@ function Set-NameCheapDNSEnvironmentVariables {
     [Environment]::SetEnvironmentVariable("NameCheapHost", $NameCheapHost, "User")
     [Environment]::SetEnvironmentVariable("NameCheapDomain", $NameCheapDomain, "User")
     if(-not($NameCheapPassword)){
-    $NameCheapPassword = $(Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password").getNetworkCredential().Password
+    $Credential = Get-Credential -UserName $NameCheapHost -Message "Enter Dynamic DNS Password"
+    $NameCheapPassword = $Credential.getNetworkCredential().Password
     }
     [Environment]::SetEnvironmentVariable("NameCheapPassword", $NameCheapPassword, "User")
     Write-Host "Environment variables set for NameCheap DNS."
