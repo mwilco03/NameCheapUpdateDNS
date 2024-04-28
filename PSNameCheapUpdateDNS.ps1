@@ -58,9 +58,6 @@ function Get-NameCheapDNSCredential {
         [Parameter(Mandatory = $true)]
         [string]$NameCheapDomain
     )
-    $Credential = Read-Host -AsSecureString -Prompt "Enter Dynamic DNS Password"
-    $BytStr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Credential)
-    $NameCheapPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BytStr) 
     $NameCheapDNSCredential = @{
         NameCheapHost = $NameCheapHost
         domain = $NameCheapDomain
