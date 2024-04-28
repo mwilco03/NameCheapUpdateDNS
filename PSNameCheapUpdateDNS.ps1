@@ -92,14 +92,14 @@ function Update-NameCheapDNS {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [string]$NameCheapDomain = $env:NameCheapDomain,
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [string]$Password = $env:NameCheapPassword,
+        [string]$NameCheapPassword = $env:NameCheapPassword,
         [Parameter(ValueFromPipelineByPropertyName = $true)]
         [string]$IP = $(Invoke-RestMethod "https://dynamicdns.park-your-domain.com/getip")
     )
     $NameCheapParams = @{
         host     = $NameCheapHost
         domain   = $NameCheapDomain
-        password = $Password
+        password = $NameCheapPassword
         ip       = $IP
     }
     $NameCheapQueryString = $($NameCheapParams.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join "&"
